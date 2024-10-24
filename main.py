@@ -1,9 +1,13 @@
 import datetime
 import pandas
 import collections
-from pprint import pprint
+from environs import Env
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+env = Env()
+env.read_env()
+
+WINE_DB = env.str('wine_database')
 
 
 def get_year_declension(years):
@@ -15,41 +19,39 @@ def get_year_declension(years):
         return "лет"
 
 
-excel_database = pandas.read_excel('wine3.xlsx', usecols=[
-    'Категория',
-    'Название',
-    'Сорт',
-    'Цена',
-    'Картинка',
-    'Акция'
-    ], na_values=['Nan', 'nan'], keep_default_na=False).to_dict(orient='records')
+if __name__ == '__main__':
+    excel_database = pandas.read_excel(WINE_DB, usecols=[
+        'Категория',
+        'Название',
+        'Сорт',
+        'Цена',
+        'Картинка',
+        'Акция'
+        ], na_values=['Nan', 'nan'], keep_default_na=False).to_dict(orient='records')
 
-wine_database = {'Белые вина': [], 'Красные вина': [], 'Напитки': []}
-dict_of_lists = collections.defaultdict(list)
-for wine in excel_database:
-    category = wine['Категория']
-    dict_of_lists[category].append(wine)
+    wine_database = collections.defaultdict(list)
+    for wine in excel_database:
+        category = wine['Категория']
+        wine_database[category].append(wine)
 
+    year_of_foundation = 1920
+    year = datetime.date.today().year - year_of_foundation
+    year_declension = get_year_declension(year)
 
-year = datetime.date.today().year - 1920
-year_declension = get_year_declension(year)
+    env = Environment(
+        loader=FileSystemLoader('.'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
 
-env = Environment(
-    loader=FileSystemLoader('.'),
-    autoescape=select_autoescape(['html', 'xml'])
-)
+    template = env.get_template('template.html')
 
-template = env.get_template('template.html')
+    rendered_page = template.render(
+        wine_database=wine_database,
+        years=year,
+        years_declension=year_declension
+    )
+    with open('index.html', 'w', encoding="utf8") as file:
+        file.write(rendered_page)
 
-rendered_page = template.render(
-    dict_of_lists=dict_of_lists,
-    years=year,
-    years_declension=year_declension
-)
-pprint(dict_of_lists)
-with open('index.html', 'w', encoding="utf8") as file:
-    file.write(rendered_page)
-
-server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-server.serve_forever()
-print(1)
+    server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+    server.serve_forever()
