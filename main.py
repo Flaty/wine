@@ -4,10 +4,6 @@ import collections
 from environs import Env
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Env()
-env.read_env()
-
-WINE_DB = env.str('wine_database')
 
 
 def get_year_declension(years):
@@ -20,6 +16,9 @@ def get_year_declension(years):
 
 
 if __name__ == '__main__':
+    env = Env()
+    env.read_env()
+    WINE_DB = env.str('WINE_DATABASE')
     excel_database = pandas.read_excel(WINE_DB, usecols=[
         'Категория',
         'Название',
