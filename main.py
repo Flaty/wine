@@ -18,8 +18,8 @@ def get_year_declension(years):
 if __name__ == '__main__':
     env = Env()
     env.read_env()
-    WINE_DB = env.str('WINE_DATABASE')
-    excel_database = pandas.read_excel(WINE_DB, usecols=[
+    wine_db = env.str('WINE_DATABASE')
+    excel_database = pandas.read_excel(wine_db, usecols=[
         'Категория',
         'Название',
         'Сорт',
